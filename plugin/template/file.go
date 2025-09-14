@@ -88,10 +88,6 @@ func (r *fileHandler) LostPeer(context.Context, *peer.Peer) error {
 }
 
 func (r *fileHandler) PostExploration(ctx context.Context, peers []*peer.Peer, newPeers []*peer.Peer, lostPeers []*peer.Peer) error {
-	if len(newPeers) == 0 && len(lostPeers) == 0 {
-		return nil
-	}
-
 	var tplBuff bytes.Buffer
 	tplContext := &TemplateContext{Peers: peers}
 
