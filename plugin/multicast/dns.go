@@ -79,6 +79,7 @@ func newDnsExplorer(config *dnsExplorerConfig) (*dnsExplorer, error) {
 	}
 
 	var serviceIPs []net.IP
+
 	if len(config.IPFilter) > 0 {
 		for _, ip := range ifaceIPs {
 			log.Debugf("ip address %s", ip)
@@ -95,6 +96,13 @@ func newDnsExplorer(config *dnsExplorerConfig) (*dnsExplorer, error) {
 
 	if len(serviceIPs) == 0 {
 		return nil, fmt.Errorf("no suitable IP addresses for interface %s", config.Interface)
+	}
+
+	var serviceIPv4 bool = false
+	var serviceIPv6 bool = false
+	for _, ip := range serviceIPs {
+		serviceIPv4 = serviceIPv4 || ip.To4() != nil
+		serviceIPv6 = serviceIPv6 || ip.To16() != nil
 	}
 
 	var instanceId string
@@ -136,8 +144,8 @@ func newDnsExplorer(config *dnsExplorerConfig) (*dnsExplorer, error) {
 			Domain:              config.Domain,
 			Timeout:             time.Second * 5,
 			WantUnicastResponse: false,
-			DisableIPv4:         false,
-			DisableIPv6:         false,
+			DisableIPv4:         !serviceIPv4,
+			DisableIPv6:         !serviceIPv6,
 		},
 	}, nil
 }
