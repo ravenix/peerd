@@ -12,6 +12,7 @@ import (
 	_ "github.com/ravenix/peerd/plugin/exec"
 	_ "github.com/ravenix/peerd/plugin/kubernetes"
 	_ "github.com/ravenix/peerd/plugin/multicast"
+	_ "github.com/ravenix/peerd/plugin/netlink"
 	_ "github.com/ravenix/peerd/plugin/template"
 	log "github.com/sirupsen/logrus"
 )

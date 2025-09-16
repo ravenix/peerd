@@ -75,8 +75,8 @@ func newFileHandler(config *fileHandlerConfig) (*fileHandler, error) {
 	return r, nil
 }
 
-func (r *fileHandler) PreExploration(context.Context, []*peer.Peer) error {
-	return nil
+func (r *fileHandler) PreExploration(ctx context.Context, peers []*peer.Peer) error {
+	return r.writeTemplate(peers)
 }
 
 func (r *fileHandler) NewPeer(context.Context, *peer.Peer) error {
@@ -88,6 +88,10 @@ func (r *fileHandler) LostPeer(context.Context, *peer.Peer) error {
 }
 
 func (r *fileHandler) PostExploration(ctx context.Context, peers []*peer.Peer, newPeers []*peer.Peer, lostPeers []*peer.Peer) error {
+	return r.writeTemplate(peers)
+}
+
+func (r *fileHandler) writeTemplate(peers []*peer.Peer) error {
 	var tplBuff bytes.Buffer
 	tplContext := &TemplateContext{Peers: peers}
 

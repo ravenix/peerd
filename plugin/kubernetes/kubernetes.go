@@ -7,5 +7,6 @@ func init() {
 }
 
 func setup(api plugin.PluginApi) {
+	api.RegisterExplorer("node", nodeExplorerInitializer)
 	api.RegisterExplorer("pod", podExplorerInitializer)
 }
