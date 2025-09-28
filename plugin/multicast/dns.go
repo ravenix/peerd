@@ -143,6 +143,7 @@ func newDnsExplorer(config *dnsExplorerConfig) (*dnsExplorer, error) {
 			Service:             config.Service,
 			Domain:              config.Domain,
 			Timeout:             time.Second * 5,
+			Interface:           iface,
 			WantUnicastResponse: false,
 			DisableIPv4:         !serviceIPv4,
 			DisableIPv6:         !serviceIPv6,
