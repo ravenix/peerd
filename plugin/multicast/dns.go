@@ -142,7 +142,7 @@ func newDnsExplorer(config *dnsExplorerConfig) (*dnsExplorer, error) {
 		clientConfig: &mdns.QueryParam{
 			Service:             config.Service,
 			Domain:              config.Domain,
-			Timeout:             time.Second * 5,
+			Timeout:             time.Second,
 			Interface:           iface,
 			WantUnicastResponse: false,
 			DisableIPv4:         !serviceIPv4,

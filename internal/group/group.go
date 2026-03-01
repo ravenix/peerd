@@ -59,7 +59,7 @@ func (g *Group) Reconcile(ctx context.Context) ([]*peer.Peer, []*peer.Peer, []*p
 			p.LastSeen = time.Now()
 		}
 
-		if p.LastSeen.Add(time.Second * 30).Before(time.Now()) {
+		if p.LastSeen.Add(time.Second * 5).Before(time.Now()) {
 			log.Debugf("lost peer %v", p)
 			lostPeers = append(lostPeers, p)
 

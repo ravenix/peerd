@@ -10,6 +10,7 @@ import (
 	"github.com/ravenix/peerd/internal/group"
 	"github.com/ravenix/peerd/pkg/plugin"
 	_ "github.com/ravenix/peerd/plugin/exec"
+	_ "github.com/ravenix/peerd/plugin/keepalived"
 	_ "github.com/ravenix/peerd/plugin/kubernetes"
 	_ "github.com/ravenix/peerd/plugin/multicast"
 	_ "github.com/ravenix/peerd/plugin/netlink"
@@ -79,7 +80,7 @@ func main() {
 			}
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 		for _, g := range groups {
 			for _, e := range g.Explorers {
 				go func() {

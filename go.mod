@@ -3,6 +3,7 @@ module github.com/ravenix/peerd
 go 1.24.6
 
 require (
+	github.com/godbus/dbus/v5 v5.2.2
 	github.com/hashicorp/mdns v1.0.6
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/yaml.v3 v3.0.1
