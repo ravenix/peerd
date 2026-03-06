@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -136,30 +137,91 @@ func readStateFromDBus(ctx context.Context, objectPath string) (int64, error) {
 }
 
 func stateAsInt64(value any) (int64, error) {
+	if state, ok, err := numericAsInt64(value); ok || err != nil {
+		return state, err
+	}
+
 	switch v := value.(type) {
-	case int:
-		return int64(v), nil
-	case int8:
-		return int64(v), nil
-	case int16:
-		return int64(v), nil
-	case int32:
-		return int64(v), nil
-	case int64:
-		return v, nil
-	case uint8:
-		return int64(v), nil
-	case uint16:
-		return int64(v), nil
-	case uint32:
-		return int64(v), nil
-	case uint64:
-		if v > uint64(math.MaxInt64) {
-			return 0, fmt.Errorf("state value overflows int64")
+	case dbus.Variant:
+		return stateAsInt64(v.Value())
+	case []interface{}:
+		return stateAsInt64FromSlice(v)
+	case []dbus.Variant:
+		values := make([]interface{}, 0, len(v))
+		for _, item := range v {
+			values = append(values, item)
 		}
-		return int64(v), nil
+		return stateAsInt64FromSlice(values)
+	case string:
+		return stateAsInt64FromString(v)
 	default:
 		return 0, fmt.Errorf("unexpected state type %T", value)
+	}
+}
+
+func numericAsInt64(value any) (int64, bool, error) {
+	switch v := value.(type) {
+	case int:
+		return int64(v), true, nil
+	case int8:
+		return int64(v), true, nil
+	case int16:
+		return int64(v), true, nil
+	case int32:
+		return int64(v), true, nil
+	case int64:
+		return v, true, nil
+	case uint8:
+		return int64(v), true, nil
+	case uint16:
+		return int64(v), true, nil
+	case uint32:
+		return int64(v), true, nil
+	case uint64:
+		if v > uint64(math.MaxInt64) {
+			return 0, true, fmt.Errorf("state value overflows int64")
+		}
+		return int64(v), true, nil
+	default:
+		return 0, false, nil
+	}
+}
+
+func stateAsInt64FromSlice(values []interface{}) (int64, error) {
+	if len(values) == 0 {
+		return 0, fmt.Errorf("unexpected state type []interface {}")
+	}
+
+	var firstErr error
+	for _, value := range values {
+		state, err := stateAsInt64(value)
+		if err == nil {
+			return state, nil
+		}
+		if firstErr == nil {
+			firstErr = err
+		}
+	}
+
+	if firstErr != nil {
+		return 0, firstErr
+	}
+
+	return 0, fmt.Errorf("unexpected state type []interface {}")
+}
+
+func stateAsInt64FromString(value string) (int64, error) {
+	switch strings.ToUpper(strings.TrimSpace(value)) {
+	case "INIT":
+		return 0, nil
+	case "BACKUP":
+		return 1, nil
+	case "MASTER":
+		return keepalivedMasterState, nil
+	case "FAULT", "STOP", "DELETED":
+		return 3, nil
+	default:
+		return 0, fmt.Errorf("unexpected state string %q", value)
 	}
 }
 

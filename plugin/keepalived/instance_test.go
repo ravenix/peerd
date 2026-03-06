@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/godbus/dbus/v5"
 	"github.com/ravenix/peerd/pkg/explorer"
 )
 
@@ -163,5 +164,38 @@ func TestInstanceExplorerCadence(t *testing.T) {
 
 	if cadence.PeerTTL != 300*time.Millisecond {
 		t.Fatalf("unexpected peer ttl: %s", cadence.PeerTTL)
+	}
+}
+
+func TestStateAsInt64HandlesNestedListValue(t *testing.T) {
+	state, err := stateAsInt64([]interface{}{uint32(keepalivedMasterState)})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if state != keepalivedMasterState {
+		t.Fatalf("unexpected state: %d", state)
+	}
+}
+
+func TestStateAsInt64HandlesVariantListValue(t *testing.T) {
+	state, err := stateAsInt64([]interface{}{dbus.MakeVariant(uint8(keepalivedMasterState))})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if state != keepalivedMasterState {
+		t.Fatalf("unexpected state: %d", state)
+	}
+}
+
+func TestStateAsInt64HandlesStringState(t *testing.T) {
+	state, err := stateAsInt64([]interface{}{"MASTER"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if state != keepalivedMasterState {
+		t.Fatalf("unexpected state: %d", state)
 	}
 }
