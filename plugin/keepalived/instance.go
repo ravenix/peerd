@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/ravenix/peerd/pkg/explorer"
@@ -73,6 +74,14 @@ func newInstanceExplorer(config *instanceExplorerConfig) (*instanceExplorer, err
 
 func (e *instanceExplorer) Run(ctx context.Context) error {
 	return nil
+}
+
+func (e *instanceExplorer) Cadence() explorer.Cadence {
+	return explorer.Cadence{
+		ExploreInterval: 100 * time.Millisecond,
+		ExploreTimeout:  80 * time.Millisecond,
+		PeerTTL:         300 * time.Millisecond,
+	}
 }
 
 func (e *instanceExplorer) Explore(ctx context.Context, dh explorer.DiscoveryHandler) error {

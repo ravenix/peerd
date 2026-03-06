@@ -166,6 +166,14 @@ func (e *dnsExplorer) Run(ctx context.Context) error {
 	return nil
 }
 
+func (e *dnsExplorer) Cadence() explorer.Cadence {
+	return explorer.Cadence{
+		ExploreInterval: 2 * time.Second,
+		ExploreTimeout:  time.Second,
+		PeerTTL:         6 * time.Second,
+	}
+}
+
 func (e *dnsExplorer) Explore(ctx context.Context, dh explorer.DiscoveryHandler) error {
 	entriesCh := make(chan *mdns.ServiceEntry, 256)
 	defer close(entriesCh)

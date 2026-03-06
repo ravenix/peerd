@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"time"
 
 	"github.com/ravenix/peerd/pkg/explorer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +56,14 @@ func newResourceExplorer(config *resourceExplorerConfig, listResources func(cont
 
 func (e *resourceExplorer) Run(ctx context.Context) error {
 	return nil
+}
+
+func (e *resourceExplorer) Cadence() explorer.Cadence {
+	return explorer.Cadence{
+		ExploreInterval: 2 * time.Second,
+		ExploreTimeout:  1500 * time.Millisecond,
+		PeerTTL:         6 * time.Second,
+	}
 }
 
 func (e *resourceExplorer) Explore(ctx context.Context, dh explorer.DiscoveryHandler) error {

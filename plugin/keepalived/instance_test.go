@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/ravenix/peerd/pkg/explorer"
 )
@@ -138,5 +139,29 @@ func TestNewInstanceExplorerRejectsInvalidOptionalIPs(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatalf("expected error for invalid peer_ipv6")
+	}
+}
+
+func TestInstanceExplorerCadence(t *testing.T) {
+	e, err := newInstanceExplorer(&instanceExplorerConfig{
+		Interface:       "eth0",
+		VirtualRouterID: 42,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error creating explorer: %v", err)
+	}
+
+	cadence := e.Cadence()
+
+	if cadence.ExploreInterval != 100*time.Millisecond {
+		t.Fatalf("unexpected explore interval: %s", cadence.ExploreInterval)
+	}
+
+	if cadence.ExploreTimeout != 80*time.Millisecond {
+		t.Fatalf("unexpected explore timeout: %s", cadence.ExploreTimeout)
+	}
+
+	if cadence.PeerTTL != 300*time.Millisecond {
+		t.Fatalf("unexpected peer ttl: %s", cadence.PeerTTL)
 	}
 }

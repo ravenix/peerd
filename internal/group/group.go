@@ -40,7 +40,11 @@ func (g *Group) GetPeers() []*peer.Peer {
 	return copyPeers(g.peers)
 }
 
-func (g *Group) Reconcile(ctx context.Context) ([]*peer.Peer, []*peer.Peer, []*peer.Peer) {
+func (g *Group) Reconcile(ctx context.Context, peerTTL time.Duration) ([]*peer.Peer, []*peer.Peer, []*peer.Peer) {
+	if peerTTL <= 0 {
+		peerTTL = 5 * time.Second
+	}
+
 	tmp := g.peers[:0]
 	var newPeers []*peer.Peer
 	var lostPeers []*peer.Peer
@@ -59,7 +63,7 @@ func (g *Group) Reconcile(ctx context.Context) ([]*peer.Peer, []*peer.Peer, []*p
 			p.LastSeen = time.Now()
 		}
 
-		if p.LastSeen.Add(time.Second * 5).Before(time.Now()) {
+		if p.LastSeen.Add(peerTTL).Before(time.Now()) {
 			log.Debugf("lost peer %v", p)
 			lostPeers = append(lostPeers, p)
 

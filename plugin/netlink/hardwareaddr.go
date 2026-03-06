@@ -3,6 +3,7 @@ package netlink
 import (
 	"context"
 	"net"
+	"time"
 
 	"github.com/ravenix/peerd/pkg/explorer"
 	"gopkg.in/yaml.v3"
@@ -33,6 +34,14 @@ func newHardwareAddrExplorer(config *hardwareAddrExplorerConfig) (*hardwareAddrE
 
 func (e *hardwareAddrExplorer) Run(ctx context.Context) error {
 	return nil
+}
+
+func (e *hardwareAddrExplorer) Cadence() explorer.Cadence {
+	return explorer.Cadence{
+		ExploreInterval: 10 * time.Second,
+		ExploreTimeout:  500 * time.Millisecond,
+		PeerTTL:         30 * time.Second,
+	}
 }
 
 func (e *hardwareAddrExplorer) Explore(ctx context.Context, dh explorer.DiscoveryHandler) error {
