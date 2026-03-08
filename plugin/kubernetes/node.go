@@ -57,15 +57,15 @@ func (e *nodeExplorer) listNodes(ctx context.Context) ([]any, error) {
 	}
 
 	var items []any
-	for _, item := range list.Items {
-		items = append(items, item)
+	for idx := range list.Items {
+		items = append(items, &list.Items[idx])
 	}
 
 	return items, nil
 }
 
 func (e *nodeExplorer) exploreNode(ctx context.Context, resource any) *explorer.Discovery {
-	node, ok := resource.(corev1.Node)
+	node, ok := resource.(*corev1.Node)
 	if !ok {
 		return nil
 	}

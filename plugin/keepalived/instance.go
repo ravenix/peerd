@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -26,6 +27,9 @@ type instanceExplorer struct {
 	peerIPv6           net.IP
 	port               uint16
 	readState          func(context.Context, string) (int64, error)
+
+	dbusConnMu sync.Mutex
+	dbusConn   *dbus.Conn
 }
 
 type instanceExplorerConfig struct {
@@ -64,16 +68,20 @@ func newInstanceExplorer(config *instanceExplorerConfig) (*instanceExplorer, err
 		return nil, fmt.Errorf("invalid peer_ipv6: %w", err)
 	}
 
-	return &instanceExplorer{
+	e := &instanceExplorer{
 		instanceObjectPath: instanceObjectPath(config.Interface, config.VirtualRouterID),
 		peerIPv4:           peerIPv4,
 		peerIPv6:           peerIPv6,
 		port:               config.Port,
-		readState:          readStateFromDBus,
-	}, nil
+	}
+	e.readState = e.readStateFromDBus
+
+	return e, nil
 }
 
 func (e *instanceExplorer) Run(ctx context.Context) error {
+	<-ctx.Done()
+	e.closeDBusConn()
 	return nil
 }
 
@@ -108,12 +116,31 @@ func instanceObjectPath(iface string, virtualRouterID uint16) string {
 	return fmt.Sprintf("/org/keepalived/Vrrp1/Instance/%s/%d/IPv6", iface, virtualRouterID)
 }
 
-func readStateFromDBus(ctx context.Context, objectPath string) (int64, error) {
-	conn, err := dbus.ConnectSystemBus()
+func (e *instanceExplorer) readStateFromDBus(ctx context.Context, objectPath string) (int64, error) {
+	conn, err := e.getOrCreateDBusConn()
 	if err != nil {
 		return 0, err
 	}
-	defer conn.Close()
+
+	state, err := readStateFromConn(ctx, conn, objectPath)
+	if err == nil {
+		return state, nil
+	}
+
+	e.resetDBusConn(conn)
+
+	conn, connErr := e.getOrCreateDBusConn()
+	if connErr != nil {
+		return 0, err
+	}
+
+	return readStateFromConn(ctx, conn, objectPath)
+}
+
+func readStateFromConn(ctx context.Context, conn *dbus.Conn, objectPath string) (int64, error) {
+	if conn == nil {
+		return 0, fmt.Errorf("dbus connection is nil")
+	}
 
 	obj := conn.Object(keepalivedServiceName, dbus.ObjectPath(objectPath))
 
@@ -134,6 +161,47 @@ func readStateFromDBus(ctx context.Context, objectPath string) (int64, error) {
 	}
 
 	return stateAsInt64(value.Value())
+}
+
+func (e *instanceExplorer) getOrCreateDBusConn() (*dbus.Conn, error) {
+	e.dbusConnMu.Lock()
+	defer e.dbusConnMu.Unlock()
+
+	if e.dbusConn != nil {
+		return e.dbusConn, nil
+	}
+
+	conn, err := dbus.ConnectSystemBus()
+	if err != nil {
+		return nil, err
+	}
+
+	e.dbusConn = conn
+	return e.dbusConn, nil
+}
+
+func (e *instanceExplorer) resetDBusConn(conn *dbus.Conn) {
+	e.dbusConnMu.Lock()
+	defer e.dbusConnMu.Unlock()
+
+	if e.dbusConn != conn {
+		return
+	}
+
+	_ = e.dbusConn.Close()
+	e.dbusConn = nil
+}
+
+func (e *instanceExplorer) closeDBusConn() {
+	e.dbusConnMu.Lock()
+	defer e.dbusConnMu.Unlock()
+
+	if e.dbusConn == nil {
+		return
+	}
+
+	_ = e.dbusConn.Close()
+	e.dbusConn = nil
 }
 
 func stateAsInt64(value any) (int64, error) {

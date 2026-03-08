@@ -39,6 +39,7 @@ func newpodExplorer(config *podExplorerConfig) (*podExplorer, error) {
 	}
 
 	e.resourceExplorer = arc
+	e.namespace = config.Namespace
 	e.podPort = config.PodPort
 	return e, nil
 }
@@ -50,15 +51,15 @@ func (e *podExplorer) listPods(ctx context.Context) ([]any, error) {
 	}
 
 	var items []any
-	for _, item := range list.Items {
-		items = append(items, item)
+	for idx := range list.Items {
+		items = append(items, &list.Items[idx])
 	}
 
 	return items, nil
 }
 
 func (e *podExplorer) explorePod(ctx context.Context, resource any) *explorer.Discovery {
-	pod, ok := resource.(corev1.Pod)
+	pod, ok := resource.(*corev1.Pod)
 	if !ok {
 		return nil
 	}

@@ -156,11 +156,10 @@ func (e *dnsExplorer) Run(ctx context.Context) error {
 	config.Logger = stdlibLog.New(log.StandardLogger().Writer(), "", 0)
 
 	server, err := mdns.NewServer(&config)
-	defer server.Shutdown()
-
 	if err != nil {
 		return err
 	}
+	defer server.Shutdown()
 
 	<-ctx.Done()
 	return nil
